@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if (($# > 0))
+then
+  fifo=$(mktemp -u)
+  mkfifo "$fifo"
+  trap 'rm -f "$fifo"' EXIT
+
+  exec 3<&0 
+  exec 0<&-
+
+  OLDIFS="$IFS"
+  IFS=$'\n'
+  echo "$*" > "$fifo" &
+  IFS="$OLDIFS"
+
+  exec 0<"$fifo"
+fi
+
+while read -r ip;
+do
+  pexecute "ssh $ip"
+done
